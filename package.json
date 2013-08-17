@@ -1,0 +1,21 @@
+{
+  "name": "picnicc",
+  "version": "0.0.4",
+  "author": "@alexduloz <alex@one-two-one-two-microphone-check.com>",
+  "description": "Custom builds made easy: web interface via the command-line",
+  "contributors": [
+    {
+      "name": "Alex Duloz",
+      "email": "alex@one-two-one-two-microphone-check.com"
+    }
+  ],
+  "dependencies": {
+    "request": "2.20.x",
+    "prompt": "0.2.x"
+  },
+  "license": "MIT",
+  "bin": {
+    "picnicc": "bin/picnicc"
+  },
+  "preferGlobal": true
+}

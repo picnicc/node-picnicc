@@ -1,0 +1,219 @@
+#!/usr/bin/env node
+
+var prompt = require('prompt');
+var request = require('request');
+
+var config = {
+    endpoints: {
+        signup: "https://picnic.cc/api/v1/signup",
+        create: "https://picnic.cc/api/v1/project/create",
+        login: "https://picnic.cc/api/v1/login"
+    }
+}
+
+
+var signup = {
+    properties: {
+        email: {
+            pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+            message: "This doesn't look like a valid email",
+            required: true
+        },
+        username: {
+            pattern: /^[-A-Za-z0-9]{1,15}$/,
+            message: "A username may contain only alphanumeric characters and dashes and can't begin with these, and cannot be longer than 15 characters.",
+            required: true
+        },
+        password: {
+            conform: function(val) {
+                if (val.length < 6 || val.length > 70) {
+                    return false
+                }
+                return true;
+            },
+            message: 'A password must be at least 6 characters long and no longer than 70 characters.',
+            hidden: true,
+            required: true
+        }
+    }
+};
+
+var login = {
+    properties: {
+        username: {
+            required: true
+        },
+        password: {
+            hidden: true,
+            required: true
+        },
+    }
+};
+
+
+var create = {
+    properties: {
+        project: {
+            conform: function(project) {
+                if (project.length > 255) {
+                    return false;
+                }
+                if (!project.match(/^[a-zA-Z0-9-_.]+$/)) {
+                    return false;
+                }
+                if (project.substr(-5) !== ".scss" && project.substr(-5) !== ".less" && project.substr(-4) !== ".zip" && project.substr(-3) !== ".js" && project.substr(-4) !== ".css") {
+                    return false;
+                }
+                if (project.charAt(0) === ".") {
+                    return false;
+                }
+                return true;
+            },
+            message: "A project cannnot be longer than 255 characters, can only contain alphanumeric characters, dashes, underscores and dots, should have a valid extension (.js, .css, .less, .scss, .zip), and cannot start with a dot.",
+            required: true
+        }
+    }
+};
+
+
+//
+// Start the prompt
+//
+prompt.start();
+
+function program() {
+
+    var arg = process.argv[2];
+
+    if (!arg) {
+        console.log("picnicc:: an argument is required. Try 'signup' or 'create'");
+        return;
+    }
+
+    //
+    // sign up
+    //
+
+    if (arg === "signup") {
+
+        console.log("I'm going to ask you for an email, a username and a password.");
+
+        prompt.get(signup, function(err, result) {
+            if (err) {
+                console.log("Sorry, an error occured: " + err);
+                return;
+            }
+
+
+            request.post(config.endpoints.signup, function(err, res) {
+
+                if (err) {
+                    console.log("Connection to the picnicc server failed");
+                    return;
+                }
+
+                var parsed = JSON.parse(res.body);
+
+                if (parsed.error) {
+                    console.log("I wasn't able to sign you up. Here's some relevant data I received from the server: " + parsed.error);
+                    return;
+                }
+
+                if (parsed.done) {
+                    console.log("Congratulations! You can start creating projects on picnicc using '$ picnicc create'");
+                    return;
+                }
+                return;
+            }).form({
+                email: result.email,
+                username: result.username,
+                password: result.password,
+            });
+
+        });
+
+        return;
+
+    }
+
+    if (arg === "create") {
+
+        //
+        // Login
+        //
+        console.log("First, I need to log you in.");
+        prompt.get(login, function(err, result) {
+            if (err) {
+                console.log("Sorry, an error occured: " + err);
+                return;
+            }
+            var username = result.username;
+            var password = result.password;
+
+            request.post(config.endpoints.login, {
+                form: {
+                    username: username,
+                    password: password
+                }
+            }, function(err, res) {
+                if (err) {
+                    console.log("Connection to the picnicc server failed");
+                    return;
+                }
+
+                var parsed = JSON.parse(res.body);
+
+                if (parsed.error) {
+                    console.log("Your credentials did not look valid. Please try again.");
+                    return;
+                }
+
+                if (parsed.done) {
+                    console.log("Now, all you have to do is give me a project name with a valid extension (.js, .css, .less, .scss or .zip)");
+
+                    //
+                    // Create project
+                    //
+
+                    prompt.get(create, function(err, result) {
+                        if (err) {
+                            console.log("Sorry, an error occured: " + err);
+                            return;
+                        }
+
+                        request.post(config.endpoints.create, {
+                            form: {
+                                project: result.project,
+                                username: username,
+                                password: password
+                            }
+                        }, function(err, res) {
+
+                            if (err) {
+                                console.log("Connection to the picnicc server failed");
+                                return;
+                            }
+                            console.log(res.body);
+                            var parsed = JSON.parse(res.body);
+
+                            if (parsed.error) {
+                                console.log("I wasn't able to create your project. Here's some relevant data I received from the server: " + parsed.error);
+                                return;
+                            }
+
+                            if (parsed.done) {
+                                console.log("Congratulations! Your picnicc project has just been created.");
+                                return;
+                            }
+                            return;
+                        });
+                    });
+                }
+            });
+        });
+        return;
+    }
+
+    console.log("picnicc:: unknow argument '" + arg + "'. Try 'signup' or 'create'");
+}
+program();
