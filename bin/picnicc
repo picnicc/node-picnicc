@@ -5,9 +5,9 @@ var request = require('request');
 
 var config = {
     endpoints: {
-        signup: "https://picnic.cc/api/v1/signup",
-        create: "https://picnic.cc/api/v1/project/create",
-        login: "https://picnic.cc/api/v1/login"
+        signup: "https://picni.cc/api/v1/signup",
+        create: "https://picni.cc/api/v1/project/create",
+        login: "https://picni.cc/api/v1/login"
     }
 }
 

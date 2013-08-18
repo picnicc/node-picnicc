@@ -1,8 +1,8 @@
 {
   "name": "picnicc",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "author": "@alexduloz <alex@one-two-one-two-microphone-check.com>",
-  "description": "Custom builds made easy: web interface via the command-line",
+  "description": "Custom builds made easy | via the command-line",
   "contributors": [
     {
       "name": "Alex Duloz",
